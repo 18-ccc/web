@@ -93,7 +93,7 @@ evaluate_model()
 
 # -------------------- 6. 保存模型和标准化器 --------------------
 # 保存最佳模型
-joblib.dump(best_rf_model, r"D:\bishe\毕业设计\分类模型\antimicrobial_peptide_model.pkl")
+joblib.dump(best_rf_model, r"D:\bishe\毕业设计\models\antimicrobial_peptide_model.pkl")
 
 # 保存标准化器
-joblib.dump(scaler, r"D:\bishe\毕业设计\分类模型\scaler.pkl")
+joblib.dump(scaler, r"D:\bishe\毕业设计\models\scaler.pkl")

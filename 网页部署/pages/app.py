@@ -1,101 +1,130 @@
 import streamlit as st
 import pandas as pd
-import joblib
 import numpy as np
-import base64
-import io
+import matplotlib.pyplot as plt
+import seaborn as sns
 from collections import Counter
+from Bio import SeqIO
+import io
 
-# -------------------- 1. 设置页面 --------------------
-st.set_page_config(page_title="抗菌肽预测系统", page_icon="🧪", layout="wide")
-st.title("抗菌肽预测系统")
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    classification_report, confusion_matrix, roc_auc_score,
+    precision_score, recall_score, f1_score
+)
 
-# -------------------- 2. 视频展示 --------------------
-video_path = r"D:\HuaweiMoveData\Users\陈雯静.LAPTOP-CJOIH1UC\Desktop\WeChat_20250304132551.mp4"
+# 页面设置
+st.set_page_config(page_title="抗菌肽预测", layout="wide")
+st.title("🧬 抗菌肽预测系统")
+st.markdown("上传 FASTA 文件，系统将提取 AAC 特征并进行抗菌肽预测。")
 
-# 读取视频文件并进行 Base64 编码
-with open(video_path, "rb") as video_file:
-    video_bytes = video_file.read()
-    video_base64 = base64.b64encode(video_bytes).decode()
-
-# 使用 HTML 代码嵌入视频，并隐藏进度条
-video_html = f"""
-    <video width="800" height="450" autoplay loop muted playsinline controlslist="nodownload nofullscreen noremoteplayback" style="outline: none;">
-        <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
-        您的浏览器不支持视频播放
-    </video>
-"""
-st.markdown(video_html, unsafe_allow_html=True)
-
-# -------------------- 3. 加载模型 --------------------
-MODEL_PATH = r"/分类模型/antimicrobial_peptide_model.pkl"
-SCALER_PATH = r"/分类模型/scaler.pkl"
-
-model = joblib.load(MODEL_PATH)
-scaler = joblib.load(SCALER_PATH)
-
-st.write("请在下方输入氨基酸序列，我们将进行AAC分析，并预测是否为抗菌肽。")
-
-# -------------------- 4. AAC 分析函数 --------------------
+# AAC 特征计算函数
 def compute_aac(sequence):
     AA = 'ACDEFGHIKLMNPQRSTVWY'
     count = Counter(sequence)
     seq_len = len(sequence)
     return [count[aa] / seq_len if seq_len > 0 else 0 for aa in AA]
 
-# -------------------- 5. 上传 FASTA 文件进行批量预测 --------------------
-uploaded_file = st.file_uploader("上传包含肽序列的 FASTA 文件", type=["fasta", "txt"])
+# 上传 FASTA 文件
+fasta_file = st.file_uploader("📁 上传 FASTA 文件（含标签注释）", type=["fasta", "fa"])
 
-if uploaded_file:
-    fasta_sequences = []
-    for line in uploaded_file:
-        line = line.decode('utf-8').strip()
-        if not line.startswith('>'):
-            fasta_sequences.append(line)
+if fasta_file is not None:
+    st.info("✅ 开始读取序列并提取 AAC 特征...")
 
-    # 进行 AAC 分析
-    aac_features = [compute_aac(seq) for seq in fasta_sequences]
-    df = pd.DataFrame(aac_features, columns=list('ACDEFGHIKLMNPQRSTVWY'))
+    sequences = []
+    labels = []
 
-    # 数据标准化
-    df_scaled = scaler.transform(df)
+    for record in SeqIO.parse(io.StringIO(fasta_file.getvalue().decode()), "fasta"):
+        seq = str(record.seq).upper()
+        name = record.id
+        # 要求标签在描述中，格式如 ">name|1" 或 ">name|0"
+        label = int(name.split("|")[-1]) if "|" in name else None
+        aac = compute_aac(seq)
+        if label is not None:
+            sequences.append(aac)
+            labels.append(label)
 
-    # 预测
-    predictions = model.predict(df_scaled)
-    probabilities = model.predict_proba(df_scaled)[:, 1]
-
-    # 生成结果 DataFrame
-    result_df = pd.DataFrame({
-        "序列": fasta_sequences,
-        "预测类别": ["抗菌肽" if p == 1 else "非抗菌肽" for p in predictions],
-        "预测概率": probabilities
-    })
-
-    st.write("预测结果：", result_df)
-
-    # 提供下载
-    output = io.BytesIO()
-    result_df.to_excel(output, index=False, engine='openpyxl')
-    output.seek(0)
-    st.download_button(label="下载预测结果", data=output, file_name="抗菌肽预测结果.xlsx",
-                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-else:
-    st.info("请上传 FASTA 文件，或者手动输入氨基酸序列。")
-
-# -------------------- 6. 手动输入氨基酸序列进行预测 --------------------
-st.subheader("手动输入氨基酸序列进行预测")
-input_sequence = st.text_input("请输入氨基酸序列（单字母代码）:")
-
-if st.button("预测"):
-    if input_sequence:
-        input_aac = np.array(compute_aac(input_sequence)).reshape(1, -1)
-        input_scaled = scaler.transform(input_aac)
-        prediction = model.predict(input_scaled)[0]
-        probability = model.predict_proba(input_scaled)[0, 1]
-
-        if prediction == 1:
-            st.success(f"预测结果：**抗菌肽** (概率: {probability:.2f}) 🦠")
-        else:
-            st.error(f"预测结果：**非抗菌肽** (概率: {probability:.2f}) ❌")
+    if not labels:
+        st.error("序列标签未检测到。请确保 FASTA 标题行为 `>名称|标签` 格式，例如 `>seq1|1`。")
     else:
-        st.warning("请输入有效的氨基酸序列！")
+        df = pd.DataFrame(sequences, columns=list("ACDEFGHIKLMNPQRSTVWY"))
+        df["label"] = labels
+
+        st.success(f"已读取序列数量：{len(df)}，准备建模...")
+
+        # 特征提取与建模
+        X = df.drop("label", axis=1)
+        y = df["label"]
+
+        rf = RandomForestClassifier(n_estimators=200, max_depth=15, random_state=42)
+        rf.fit(X, y)
+        feature_importances = pd.Series(rf.feature_importances_, index=X.columns)
+        top_10_features = feature_importances.nlargest(10).index.tolist()
+        X_selected = X[top_10_features]
+
+        X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.3, random_state=42)
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+
+        best_rf_model = RandomForestClassifier(
+            n_estimators=150, max_depth=12, min_samples_split=10,
+            min_samples_leaf=4, class_weight='balanced', random_state=42
+        )
+        best_rf_model.fit(X_train_scaled, y_train)
+
+        # 模型评估
+        y_test_pred = best_rf_model.predict(X_test_scaled)
+        y_test_prob = best_rf_model.predict_proba(X_test_scaled)[:, 1]
+        cv_acc = cross_val_score(best_rf_model, X_train_scaled, y_train, cv=5, scoring='accuracy')
+        cv_auc = cross_val_score(best_rf_model, X_train_scaled, y_train, cv=5, scoring='roc_auc')
+
+        st.subheader("📊 模型评估结果")
+        st.write(f"Cross-Validation Accuracy: **{cv_acc.mean():.4f} ± {cv_acc.std():.4f}**")
+        st.write(f"Cross-Validation AUC: **{cv_auc.mean():.4f} ± {cv_auc.std():.4f}**")
+        st.write(f"测试集 Accuracy: {best_rf_model.score(X_test_scaled, y_test):.4f}")
+        st.write(f"测试集 AUC: {roc_auc_score(y_test, y_test_prob):.4f}")
+
+        st.subheader("📌 Precision / Recall / F1")
+        st.json({
+            "Precision": precision_score(y_test, y_test_pred, average='weighted'),
+            "Recall": recall_score(y_test, y_test_pred, average='weighted'),
+            "F1-score": f1_score(y_test, y_test_pred, average='weighted'),
+        })
+
+        st.subheader("🧩 混淆矩阵")
+        fig, ax = plt.subplots()
+        sns.heatmap(confusion_matrix(y_test, y_test_pred), annot=True, fmt="d", cmap="Oranges", ax=ax)
+        ax.set_title("Test Confusion Matrix")
+        st.pyplot(fig)
+
+        st.write("---")
+        st.subheader("🔮 重新上传新 FASTA 文件进行预测（不含标签）")
+        pred_file = st.file_uploader("上传新的 FASTA 文件进行抗菌肽预测", type=["fasta", "fa"], key="predict_fasta")
+
+        def predict_sequence(sequence, model, scaler, selected_features):
+            aac = compute_aac(sequence)
+            df = pd.DataFrame([aac], columns=list("ACDEFGHIKLMNPQRSTVWY"))
+            df_selected = df[selected_features]
+            df_scaled = scaler.transform(df_selected)
+            prob = model.predict_proba(df_scaled)[0][1]
+            pred = model.predict(df_scaled)[0]
+            return pred, prob
+
+        if pred_file is not None:
+            st.info("正在分析并预测新序列...")
+            sequences = []
+            for record in SeqIO.parse(io.StringIO(pred_file.getvalue().decode()), "fasta"):
+                seq = str(record.seq).upper()
+                name = record.id
+                pred, prob = predict_sequence(seq, best_rf_model, scaler, top_10_features)
+                sequences.append({"Name": name, "Prediction": pred, "Probability": prob})
+            result_df = pd.DataFrame(sequences)
+            st.dataframe(result_df)
+            st.download_button("📥 下载预测结果", result_df.to_csv(index=False), file_name="prediction_results.csv")
+
+else:
+    st.info("请上传含标签的 FASTA 文件进行训练，例如 `>seq1|1` 格式。")
+

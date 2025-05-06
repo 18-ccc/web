@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 import numpy as np
 import io
+import os
 from collections import Counter
 
 # -------------------- 1. 页面设置 --------------------
@@ -20,22 +21,25 @@ if page == "抗菌肽预测":
     st.subheader("抗菌肽预测")
     st.write("请在下方输入氨基酸序列，我们将进行AAC分析，并预测是否为抗菌肽。")
 
-    # 模型路径（使用改进版模型）
-    MODEL_PATH = r"D:\bishe\毕业设计\分类模型\antimicrobial_peptide_model_improved.pkl"
-    SCALER_PATH = r"D:\bishe\毕业设计\分类模型\scaler_improved.pkl"
+    # -------------------- 4. 加载模型和标准化器 --------------------
+    # 获取当前文件目录
+    BASE_DIR = os.path.dirname(__file__)
+    # 使用相对路径加载模型
+    MODEL_PATH = os.path.join(BASE_DIR, "models", "antimicrobial_peptide_model_improved.pkl")
+    SCALER_PATH = os.path.join(BASE_DIR, "models", "scaler_improved.pkl")
 
-    # 加载模型
+    # 加载模型和标准化器
     model = joblib.load(MODEL_PATH)
     scaler = joblib.load(SCALER_PATH)
 
-    # AAC 特征提取函数
+    # -------------------- 5. AAC 特征提取函数 --------------------
     def compute_aac(sequence):
         AA = 'ACDEFGHIKLMNPQRSTVWY'
         count = Counter(sequence)
         seq_len = len(sequence)
         return [count[aa] / seq_len if seq_len > 0 else 0 for aa in AA]
 
-    # 上传 FASTA 批量预测
+    # -------------------- 6. 上传 FASTA 批量预测 --------------------
     uploaded_file = st.file_uploader("上传包含肽序列的 FASTA 文件", type=["fasta", "txt"])
 
     if uploaded_file:
@@ -63,7 +67,7 @@ if page == "抗菌肽预测":
 
         st.write("预测结果：", result_df)
 
-        # 下载
+        # 下载结果
         output = io.BytesIO()
         result_df.to_excel(output, index=False, engine='openpyxl')
         output.seek(0)
@@ -72,7 +76,7 @@ if page == "抗菌肽预测":
     else:
         st.info("请上传 FASTA 文件，或者手动输入氨基酸序列。")
 
-    # 手动输入序列预测
+    # -------------------- 7. 手动输入序列预测 --------------------
     st.subheader("手动输入氨基酸序列进行预测")
     input_sequence = st.text_input("请输入氨基酸序列（单字母代码）:")
 
@@ -90,12 +94,12 @@ if page == "抗菌肽预测":
         else:
             st.warning("请输入有效的氨基酸序列！")
 
-# -------------------- 4. 类别预测页面 --------------------
+# -------------------- 8. 类别预测页面 --------------------
 elif page == "类别预测":
     st.subheader("类别预测")
     st.info("此功能开发中，将用于细菌种类分类（如 A. baumannii, P. aeruginosa 等）。")
 
-# -------------------- 5. MIC 值预测页面 --------------------
+# -------------------- 9. MIC 值预测页面 --------------------
 elif page == "MIC值预测":
     st.subheader("MIC值预测")
     st.info("此功能开发中，将用于回归预测抗菌肽的最小抑菌浓度（MIC）。")

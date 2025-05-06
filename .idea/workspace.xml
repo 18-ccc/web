@@ -5,17 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="26e7e606-a3b1-4fed-9108-5cbbe910745f" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/分类模型/antimicrobial_peptide_model_improved.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/分类模型/scaler_improved.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/分类模型/总体抗菌肽.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/总体抗菌肽/总体抗菌肽模型.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/总体抗菌肽/总体抗菌肽肽段选择.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/总体抗菌肽/正负样本合并.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web.py" beforeDir="false" afterPath="$PROJECT_DIR$/web.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/分类模型/antimicrobial_peptide_model.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/分类模型/antimicrobial_peptide_model.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/分类模型/scaler.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/分类模型/scaler.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/网页部署/pages/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/网页部署/pages/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

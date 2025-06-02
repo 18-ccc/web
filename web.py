@@ -9,49 +9,74 @@ from collections import Counter
 # -------------------- 1. 页面设置 --------------------
 st.set_page_config(page_title="抗菌肽预测系统", page_icon="🧪", layout="wide")
 
-# 主标题，添加图标
+# 自定义样式，缩小侧边栏和主内容区的间距
 st.markdown(
     """
-    <h1 style='text-align: center; color: #4CAF50; font-size: 48px; margin-bottom: 10px;'>
-        🧪 抗菌肽预测系统
-    </h1>
-    <hr style="border:1px solid #4CAF50;">
-    """, unsafe_allow_html=True)
+    <style>
+    /* 缩小主内容区左右内边距 */
+    .css-1d391kg {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    /* 缩小侧边栏左右内边距 */
+    .css-1v3fvcr {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
 
-# 侧边栏带图标的功能选择
+    /* 按钮样式 */
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 8px 18px;
+        transition: background-color 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+        color: white;
+    }
+
+    /* 文件上传标签样式 */
+    .stFileUploader > div > label > div {
+        font-weight: bold;
+        color: #4CAF50;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    /* 主标题样式 */
+    h1 {
+        text-align: center;
+        color: #4CAF50;
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+    hr {
+        border:1px solid #4CAF50;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# 主标题，带图标
+st.markdown(
+    """
+    <h1>🧪 抗菌肽预测系统</h1>
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
+
+# 侧边栏功能选择，带图标
 page = st.sidebar.radio(
     "请选择功能页面：",
     ("🧬 抗菌肽预测", "🦠 类别预测"),
     index=0,
     help="选择不同的功能模块"
 )
-
-st.markdown("""
-    <style>
-        .stButton>button {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 8px 18px;
-            transition: background-color 0.3s ease;
-        }
-        .stButton>button:hover {
-            background-color: #45a049;
-            color: white;
-        }
-        .css-1aumxhk {
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-        }
-        .stFileUploader > div > label > div {
-            font-weight: bold;
-            color: #4CAF50;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 if page == "🧬 抗菌肽预测":
     st.subheader("🧬 抗菌肽预测")

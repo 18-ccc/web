@@ -74,32 +74,10 @@ if page == "抗菌肽预测":
         st.download_button("下载预测结果", data=output, file_name="抗菌肽预测结果.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     else:
-        st.info("请上传 FASTA 文件，或者手动输入氨基酸序列。")
-
-    # -------------------- 7. 手动输入序列预测 --------------------
-    st.subheader("手动输入氨基酸序列进行预测")
-    input_sequence = st.text_input("请输入氨基酸序列（单字母代码）:")
-
-    if st.button("预测"):
-        if input_sequence:
-            input_aac = np.array(compute_aac(input_sequence)).reshape(1, -1)
-            input_scaled = scaler.transform(input_aac)
-            prediction = model.predict(input_scaled)[0]
-            probability = model.predict_proba(input_scaled)[0, 1]
-
-            if prediction == 1:
-                st.success(f"预测结果：**抗菌肽** (概率: {probability:.2f}) 🦠")
-            else:
-                st.error(f"预测结果：**非抗菌肽** (概率: {probability:.2f}) ❌")
-        else:
-            st.warning("请输入有效的氨基酸序列！")
+        st.info("请上传 FASTA 文件")
 
 # -------------------- 8. 类别预测页面 --------------------
 elif page == "类别预测":
     st.subheader("类别预测")
     st.info("此功能开发中，将用于细菌种类分类（如 A. baumannii, P. aeruginosa 等）。")
 
-# -------------------- 9. MIC 值预测页面 --------------------
-elif page == "MIC值预测":
-    st.subheader("MIC值预测")
-    st.info("此功能开发中，将用于回归预测抗菌肽的最小抑菌浓度（MIC）。")

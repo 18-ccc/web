@@ -1,68 +1,113 @@
-from Bio import SeqIO
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from Bio import SeqIO
 from collections import Counter
+import matplotlib
 
-# 指定多个FASTA文件
-fasta_files = {
-    "Changgan": r"D:\bishedata\changgancdhit.fasta",
-    "Baoman": r"D:\bishedata\baomancdhit.fasta",
-    "Tonglv": r"D:\bishedata\tonglvcdhit.fasta"
-}
+# ========== 0. 全局设置 ==========
 
-# 存储所有数据
-all_seq_lengths = []  # 存储所有文件的序列长度
-all_aa_counts = Counter()  # 统计所有文件的氨基酸出现次数
+# 设置中文字体为宋体，字号统一为 12pt（小四）
+matplotlib.rcParams['font.sans-serif'] = ['SimSun']
+matplotlib.rcParams['axes.unicode_minus'] = False
+matplotlib.rcParams['font.size'] = 12
 
-# 分别分析每个文件
-for dataset_name, fasta_path in fasta_files.items():
-    sequences = [record.seq for record in SeqIO.parse(fasta_path, "fasta")]
+# seaborn 主题美化
+sns.set(style="whitegrid")
 
-    # 计算序列长度
-    seq_lengths = [len(seq) for seq in sequences]
-    all_seq_lengths.extend(seq_lengths)  # 记录所有长度数据
+# 保存图片的路径
+save_dir = r"D:\bishedata2\正负样本特点可视化文件夹"
+os.makedirs(save_dir, exist_ok=True)
 
-    # 统计氨基酸组成
-    aa_counts = Counter("".join(map(str, sequences)))
-    all_aa_counts.update(aa_counts)  # 累计统计所有氨基酸
+# ========== 1. 定义输入文件 ==========
 
-    # 转换氨基酸统计为 DataFrame
-    aa_df = pd.DataFrame.from_dict(aa_counts, orient='index', columns=['Count']).sort_values(by='Count',
-                                                                                             ascending=False)
+pos_files = [
+    r"D:\bishedata2\鲍曼不动杆菌_cdhit.fasta",
+    r"D:\bishedata2\肠杆菌_cdhit.fasta",
+    r"D:\bishedata2\铜绿假单细胞_cdhit.fasta"
+]
+neg_file = r"D:\bishedata2\yinxingyangbencdhit.fasta"
+aa_list = list('ACDEFGHIKLMNPQRSTVWY')
 
-    # 绘制当前文件的序列长度分布
-    plt.figure(figsize=(8, 5))
-    sns.histplot(seq_lengths, bins=30, kde=True, color="blue")
-    plt.xlabel("Sequence Length")
-    plt.ylabel("Frequency")
-    plt.title(f"Sequence Length Distribution ({dataset_name})")
-    plt.show()
+# ========== 2. 读取序列并统计 ==========
 
-    # 绘制当前文件的氨基酸组成柱状图
-    plt.figure(figsize=(10, 5))
-    sns.barplot(x=aa_df.index, y=aa_df["Count"], palette="viridis")
-    plt.xlabel("Amino Acid")
-    plt.ylabel("Count")
-    plt.title(f"Amino Acid Composition ({dataset_name})")
-    plt.show()
+def read_sequences(file_list):
+    lengths = []
+    aa_counter = Counter()
+    for file in file_list:
+        for record in SeqIO.parse(file, "fasta"):
+            seq = str(record.seq).upper()
+            lengths.append(len(seq))
+            aa_counter.update(seq)
+    return lengths, aa_counter
 
-# -------- 合并分析 --------
-# 绘制整体序列长度分布
-plt.figure(figsize=(8, 5))
-sns.histplot(all_seq_lengths, bins=30, kde=True, color="red")
-plt.xlabel("Sequence Length")
-plt.ylabel("Frequency")
-plt.title("Overall Sequence Length Distribution")
+pos_lengths, pos_aa_counts = read_sequences(pos_files)
+neg_lengths, neg_aa_counts = read_sequences([neg_file])
+
+print(f"正样本数量: {len(pos_lengths)}")
+print(f"负样本数量: {len(neg_lengths)}")
+
+# ========== 3. 样本长度分布绘图 ==========
+
+plt.figure(figsize=(8,6))
+sns.kdeplot(pos_lengths, label="正样本", fill=True, color="#5B9BD5", linewidth=2)
+sns.kdeplot(neg_lengths, label="负样本", fill=True, color="#ED7D31", linewidth=2)
+
+plt.xlabel("序列长度")
+plt.ylabel("密度")
+# plt.title("图3-1 正负样本序列长度分布")
+plt.legend(prop={'family': 'SimSun', 'size': 12})
+
+plt.tight_layout()
+plt.savefig(os.path.join(save_dir, "图3-1_正负样本序列长度分布.png"), dpi=600, transparent=True)
 plt.show()
 
-# 绘制整体氨基酸组成
-all_aa_df = pd.DataFrame.from_dict(all_aa_counts, orient='index', columns=['Count']).sort_values(by='Count',
-                                                                                                 ascending=False)
+# ========== 4. 氨基酸组成频率分布 ==========
 
-plt.figure(figsize=(10, 5))
-sns.barplot(x=all_aa_df.index, y=all_aa_df["Count"], palette="magma")
-plt.xlabel("Amino Acid")
-plt.ylabel("Count")
-plt.title("Overall Amino Acid Composition")
+pos_total = sum(pos_aa_counts[aa] for aa in aa_list)
+neg_total = sum(neg_aa_counts[aa] for aa in aa_list)
+
+pos_freq = {aa: pos_aa_counts.get(aa, 0)/pos_total for aa in aa_list}
+neg_freq = {aa: neg_aa_counts.get(aa, 0)/neg_total for aa in aa_list}
+
+df = pd.DataFrame({
+    "Amino Acid": aa_list,
+    "正样本": [pos_freq[aa] for aa in aa_list],
+    "负样本": [neg_freq[aa] for aa in aa_list]
+})
+
+df_melt = df.melt(id_vars="Amino Acid", var_name="样本类型", value_name="频率")
+
+plt.figure(figsize=(10,6))
+sns.barplot(data=df_melt, x="Amino Acid", y="频率", hue="样本类型", palette=["#5B9BD5", "#ED7D31"])
+
+plt.xlabel("氨基酸")
+plt.ylabel("频率")
+# plt.title("图3-2 正负样本氨基酸组成频率分布")
+plt.legend(title="样本类型", prop={'family': 'SimSun', 'size': 12}, title_fontproperties={'family': 'SimSun', 'size': 12})
+
+plt.tight_layout()
+plt.savefig(os.path.join(save_dir, "图3-2_正负样本氨基酸组成频率分布.png"), dpi=600, transparent=True)
+plt.show()
+
+# ========== 5. 正负样本数量比例饼图 ==========
+
+labels = ['正样本', '负样本']
+sizes = [len(pos_lengths), len(neg_lengths)]
+colors = ['#5B9BD5', '#ED7D31']
+
+plt.figure(figsize=(6,6))
+plt.pie(
+    sizes,
+    labels=labels,
+    autopct='%1.1f%%',
+    colors=colors,
+    startangle=140,
+    textprops={'fontproperties':'SimSun', 'fontsize':12}
+)
+
+# plt.title("图3-3 正负样本数量比例分布")
+plt.tight_layout()
+plt.savefig(os.path.join(save_dir, "图3-3_正负样本数量比例分布.png"), dpi=600, transparent=True)
 plt.show()

@@ -12,9 +12,9 @@ features = ['ESM2', 'GCN', 'ESM2+GCN']
 
 # Accuracy 数据
 accuracy_data = {
-    '鲍曼不动杆菌': [0.9645, 0.9968, 0.9667],
-    '肠杆菌科': [0.9204, 0.9957, 0.9414],
-    '铜绿假单胞菌': [0.9414, 0.9962, 0.9667]
+    '鲍曼不动杆菌': [0.9484, 1.0000, 0.9978],
+    '肠杆菌科': [0.9043, 0.9957, 0.9290],
+    '铜绿假单胞菌': [0.9581, 0.9957, 0.9602]
 }
 
 # 设置角度
@@ -31,7 +31,7 @@ colors = {
 }
 
 # 创建图形
-fig, ax = plt.subplots(figsize=(8, 6), subplot_kw=dict(polar=True))
+fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))  # 放大图形尺寸
 
 # 绘制雷达图
 for bacteria, values in accuracy_data.items():
@@ -42,13 +42,23 @@ for bacteria, values in accuracy_data.items():
 # 设置雷达图样式
 ax.set_theta_offset(np.pi / 2)
 ax.set_theta_direction(-1)
-ax.set_thetagrids(np.degrees(angles[:-1]), labels)
-ax.set_ylim(0.9, 1.0)  # 根据具体数值微调
 
-ax.set_title('不同特征下三种细菌的Accuracy表现对比（雷达图）', fontsize=14)
+# 设置角度标签字体加粗放大
+ax.set_thetagrids(np.degrees(angles[:-1]), labels, fontsize=20, fontweight='bold')
 
-# 设置图例
-ax.legend(loc='lower right', bbox_to_anchor=(1.05, 0.0), frameon=True, prop={'family': 'SimSun', 'size': 10})
+# 设置Y轴范围与刻度字体
+ax.set_ylim(0.9, 1.0)
+ax.set_yticks([0.92, 0.94, 0.96, 0.98, 1.0])
+ax.set_yticklabels(['0.92', '0.94', '0.96', '0.98', '1.00'], fontsize=16, fontweight='bold')
+
+# 设置图例样式与位置
+ax.legend(
+    loc='center left',
+    bbox_to_anchor=(1.00, 0.25),
+    frameon=True,
+    prop={'family': 'SimSun', 'size': 16, 'weight': 'bold'}
+)
+
 
 plt.tight_layout()
 plt.show()

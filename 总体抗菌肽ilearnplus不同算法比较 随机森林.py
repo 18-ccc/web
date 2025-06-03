@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     roc_auc_score, precision_score, recall_score, f1_score, accuracy_score
@@ -10,10 +10,9 @@ import os
 
 # 要处理的特征文件名称
 feature_files = [
-    "apaac.xlsx", "qso.xlsx", "cksaap.xlsx", "ctriad.xlsx",
-    "paac.xlsx", "pseaac.xlsx", "aac.xlsx", "DDE.xlsx", "DPC.xlsx"
+    "biopython_aac.xlsx"
 ]
-base_path = r"D:\bishedata2\总体抗菌肽ilearnplus分析结果"
+base_path = r"D:\bishedata2"
 
 # 手动评估交叉验证训练集的多个指标
 def cross_validate_metrics(model, X, y, n_splits=10):
@@ -48,13 +47,12 @@ for file_name in feature_files:
     # 准备数据
     X = data.drop(['SampleName', 'label'], axis=1, errors='ignore')
     y = data['label'].reset_index(drop=True)
-
     X = X.apply(pd.to_numeric, errors='coerce').fillna(X.mean())
 
     # 特征选择（前20个重要特征）
     rf = RandomForestClassifier(n_estimators=200, max_depth=15, random_state=42)
     rf.fit(X, y)
-    top_k_features = pd.Series(rf.feature_importances_, index=X.columns).nlargest().index.tolist()
+    top_k_features = pd.Series(rf.feature_importances_, index=X.columns).nlargest(20).index.tolist()
     X_selected = X[top_k_features]
 
     # 标准化 + 划分
@@ -65,11 +63,24 @@ for file_name in feature_files:
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # 最终模型
-    best_rf_model = RandomForestClassifier(
-        n_estimators=150, max_depth=12, min_samples_split=10, min_samples_leaf=4,
-        class_weight='balanced', random_state=42
+    # 网格搜索参数空间
+    param_grid = {
+        'n_estimators': [100, 150],
+        'max_depth': [10, 12, 15],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    }
+
+    grid_search = GridSearchCV(
+        RandomForestClassifier(class_weight='balanced', random_state=42),
+        param_grid=param_grid,
+        scoring='f1_weighted',
+        cv=5,
+        n_jobs=-1,
+        verbose=0
     )
+    grid_search.fit(X_train_scaled, y_train)
+    best_rf_model = grid_search.best_estimator_
 
     # === 手动计算训练集交叉验证的多个指标 ===
     acc_mean, acc_std, rec_mean, rec_std, f1_mean, f1_std, auc_mean, auc_std = \

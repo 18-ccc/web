@@ -3,7 +3,6 @@ import numpy as np
 import os
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score, recall_score, f1_score, roc_auc_score,
@@ -37,12 +36,8 @@ X = X.fillna(X.mean())
 if X.shape[1] == 0:
     raise ValueError("特征为空，请检查特征文件内容。")
 
-# ====== 3. 特征选择（线性 SVM 选前110个特征）======
-linear_svm = SVC(kernel="linear", probability=True, random_state=42)
-linear_svm.fit(X, y)
-coef_abs = np.abs(linear_svm.coef_[0])
-top_k_features = pd.Series(coef_abs, index=X.columns).nlargest(100).index.tolist()
-X_selected = X[top_k_features]
+# ====== 3. （去掉特征选择，直接使用所有特征） ======
+X_selected = X  # 直接使用全部特征
 
 # ====== 4. 划分数据集 + 标准化 ======
 X_train, X_test, y_train, y_test = train_test_split(
@@ -144,4 +139,3 @@ def get_cv_roc(model, X, y, n_splits=10):
 fpr_list, tpr_list, mean_fpr, mean_tpr, auc_train, std_auc_train = get_cv_roc(
     rf_model, X_train_scaled, y_train
 )
-

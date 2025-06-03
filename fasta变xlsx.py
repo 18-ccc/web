@@ -32,9 +32,9 @@ def fasta_to_excel(fasta_file, output_file):
 
 
 # 输入文件路径
-input_fasta = r"D:\bishedate\yinxingyangxingbidui.fasta"
+input_fasta = r"D:\bishedata2\肠杆菌_cdhit.fasta"
 # 输出文件路径
-output_excel = r"D:\bishedate\yinxingyangxingbidui.xlsx"
+output_excel = r"D:\bishedata2\肠杆菌_cdhit.xlsx"
 
 # 调用函数
 fasta_to_excel(input_fasta, output_excel)

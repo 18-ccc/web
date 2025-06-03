@@ -10,11 +10,11 @@ matplotlib.rcParams['axes.unicode_minus'] = False
 # 特征名称
 features = ['ESM2', 'GCN', 'ESM2+GCN']
 
-# Accuracy 数据
-accuracy_data = {
-    '鲍曼不动杆菌': [0.9645, 0.9968, 0.9667],
-    '肠杆菌科': [0.9204, 0.9957, 0.9414],
-    '铜绿假单胞菌': [0.9414, 0.9962, 0.9667]
+# Recall 数据
+recall_data = {
+    '鲍曼不动杆菌': [0.9484, 1.0000, 0.9978],
+    '肠杆菌科': [0.9043, 0.9957, 0.9290],
+    '铜绿假单胞菌': [0.9581, 0.9957, 0.9602]
 }
 
 # 设置角度
@@ -34,7 +34,7 @@ colors = {
 fig, ax = plt.subplots(figsize=(8, 6), subplot_kw=dict(polar=True))
 
 # 绘制雷达图
-for bacteria, values in accuracy_data.items():
+for bacteria, values in recall_data.items():
     stats = values + values[:1]
     ax.plot(angles, stats, label=bacteria, color=colors[bacteria], linewidth=2)
     ax.fill(angles, stats, color=colors[bacteria], alpha=0.25)
@@ -45,7 +45,7 @@ ax.set_theta_direction(-1)
 ax.set_thetagrids(np.degrees(angles[:-1]), labels)
 ax.set_ylim(0.9, 1.0)  # 根据具体数值微调
 
-ax.set_title('不同特征下三种细菌的Accuracy表现对比（雷达图）', fontsize=14)
+ax.set_title('不同特征下三种细菌的Recall表现对比（雷达图）', fontsize=14)
 
 # 设置图例
 ax.legend(loc='lower right', bbox_to_anchor=(1.05, 0.0), frameon=True, prop={'family': 'SimSun', 'size': 10})

@@ -31,7 +31,7 @@ colors = {
 }
 
 # 创建图形
-fig, ax = plt.subplots(figsize=(8, 6), subplot_kw=dict(polar=True))
+fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))  # 加大图形尺寸
 
 # 绘制雷达图
 for bacteria, values in accuracy_data.items():
@@ -42,13 +42,25 @@ for bacteria, values in accuracy_data.items():
 # 设置雷达图样式
 ax.set_theta_offset(np.pi / 2)
 ax.set_theta_direction(-1)
-ax.set_thetagrids(np.degrees(angles[:-1]), labels)
-ax.set_ylim(0.7, 1.0)  # 可根据具体数值微调
 
-ax.set_title('不同特征下三种细菌的Accuracy表现对比（雷达图）', fontsize=14)
+# 设置角度标签字体放大加粗
+ax.set_thetagrids(np.degrees(angles[:-1]), labels, fontsize=20, fontweight='bold')
 
-# 设置图例
-ax.legend(loc='lower right', bbox_to_anchor=(1.05, 0.0), frameon=True, prop={'family': 'SimSun', 'size': 10})
+# 设置Y轴范围
+ax.set_ylim(0.7, 1.0)
+
+# 设置Y轴刻度字体大小
+ax.set_yticks([0.75, 0.8, 0.85, 0.9, 0.95, 1.0])
+ax.set_yticklabels(['0.75', '0.80', '0.85', '0.90', '0.95', '1.00'], fontsize=16, fontweight='bold')
+
+# 图例远离雷达图并加粗字体
+ax.legend(
+    loc='center left',
+    bbox_to_anchor=(1.00, 0.25),
+    frameon=True,
+    prop={'family': 'SimSun', 'size': 16, 'weight': 'bold'}
+)
+
 
 plt.tight_layout()
 plt.show()

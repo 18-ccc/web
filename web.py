@@ -19,17 +19,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1>🧪 抗菌肽预测系统</h1><hr>", unsafe_allow_html=True)
-
 # 功能选择
 page = st.sidebar.radio(
     "请选择功能页面：",
-    ("🧬 抗菌肽预测", "🦠 类别预测"),
+    ("🧬 抗菌肽预测", "🧫 类别预测"),
     index=0
 )
 
+# 动态主标题
+if page == "🧬 抗菌肽预测":
+    main_title = "🧪 抗菌肽预测系统"
+else:
+    main_title = "🧫 碳青霉烯类耐药性抗菌肽的预测"
 
-# AAC 模拟函数
+st.markdown(f"<h1>{main_title}</h1><hr>", unsafe_allow_html=True)
+
+
+# 模拟预测函数（示意用）
 def fake_predict(sequences):
     result = []
     for seq in sequences:
@@ -39,7 +45,7 @@ def fake_predict(sequences):
     return pd.DataFrame(result)
 
 
-# 公共上传组件
+# 上传并预测
 def upload_and_predict(label="抗菌肽预测"):
     st.subheader(f"📥 {label} - 上传肽序列")
     uploaded_file = st.file_uploader("上传 FASTA 文件（支持 .fasta 或 .txt）", type=["fasta", "txt"])
@@ -74,6 +80,6 @@ def upload_and_predict(label="抗菌肽预测"):
 # 页面路由
 if page == "🧬 抗菌肽预测":
     upload_and_predict("抗菌肽预测")
-elif page == "🦠 类别预测":
+elif page == "🧫 类别预测":
     target = st.selectbox("选择预测目标细菌：", ["鲍曼不动杆菌", "肠杆菌科", "铜绿假单胞菌"])
     upload_and_predict(f"{target} - 类别预测")

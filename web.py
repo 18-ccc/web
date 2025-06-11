@@ -81,13 +81,16 @@ def upload_and_predict(label="抗菌肽预测", bacteria_type=None):
             st.warning("未检测到有效肽序列，请检查格式。")
         else:
             st.info("⚙️ 预测中")
+            # 如果是细菌类别预测，调用 fake_bacteria_predict
             if bacteria_type:
                 result_df = fake_bacteria_predict(fasta_sequences, bacteria_type)
             else:
                 result_df = fake_predict(fasta_sequences)
 
+            # 显示结果表格
             st.dataframe(result_df, use_container_width=True)
 
+            # 下载按钮
             output = io.BytesIO()
             result_df.to_excel(output, index=False, engine='openpyxl')
             output.seek(0)

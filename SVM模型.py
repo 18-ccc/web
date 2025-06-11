@@ -10,20 +10,18 @@ from sklearn.metrics import (
 )
 import matplotlib.pyplot as plt
 import warnings
+import joblib
 
 warnings.filterwarnings("ignore")
 
-# ========== 1. 加载与合并特征文件 ==========
-feature_files = ["apaac.xlsx", "paac.xlsx", "qso.xlsx"]
+# ========== 1. 加载 AAC 特征文件 ==========
+feature_file = "aac.xlsx"
 base_path = r"D:\bishedata2\总体抗菌肽ilearnplus分析结果"
-dfs = [pd.read_excel(os.path.join(base_path, file)) for file in feature_files]
-merged = dfs[0]
-for df in dfs[1:]:
-    merged = pd.merge(merged, df, on=["SampleName", "label"], how="inner")
+df = pd.read_excel(os.path.join(base_path, feature_file))
 
 # ========== 2. 特征准备 ==========
-X = merged.drop(["SampleName", "label"], axis=1, errors="ignore")
-y = merged["label"].reset_index(drop=True)
+X = df.drop(["SampleName", "label"], axis=1, errors="ignore")
+y = df["label"].reset_index(drop=True)
 X = X.apply(pd.to_numeric, errors="coerce").fillna(X.mean())
 
 # ========== 3. 数据划分与标准化 ==========
@@ -39,7 +37,6 @@ svm_model = SVC(
     kernel="rbf", C=1.0, gamma="scale",
     probability=True, class_weight="balanced", random_state=42
 )
-
 
 # ========== 5. 交叉验证指标计算 ==========
 def cross_validate_metrics(model, X, y, n_splits=10):
@@ -62,10 +59,8 @@ def cross_validate_metrics(model, X, y, n_splits=10):
         np.mean(aucs), np.std(aucs)
     )
 
-
 acc_mean, acc_std, rec_mean, rec_std, f1_mean, f1_std, auc_mean, auc_std = \
     cross_validate_metrics(svm_model, X_train_scaled, y_train)
-
 
 # ========== 6. 绘制交叉验证10折ROC曲线（每折曲线均显示AUC） ==========
 def plot_cv_roc_curve(model, X, y, n_splits=10):
@@ -111,7 +106,6 @@ def plot_cv_roc_curve(model, X, y, n_splits=10):
     plt.tight_layout()
     plt.show()
 
-
 plot_cv_roc_curve(svm_model, X_train_scaled, y_train, n_splits=10)
 
 # ========== 7. 测试集评估 ==========
@@ -149,18 +143,7 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-import joblib
 
-# 你的模型和标准化器
-model = SVC(kernel="rbf", probability=True, class_weight="balanced", random_state=42)
-scaler = StandardScaler()
-
-# 训练模型的部分…
-# scaler.fit_transform(...)
-# model.fit(...)
-
-# 保存为pkl文件
-joblib.dump(model, "svm_model.pkl.pkl")
+# ========== 9. 保存 SVM 模型和标准化器 ==========
+joblib.dump(svm_model, "svm_model.pkl")
 joblib.dump(scaler, "scaler.pkl")

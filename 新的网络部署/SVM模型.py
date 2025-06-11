@@ -162,5 +162,5 @@ scaler = StandardScaler()
 # model.fit(...)
 
 # 保存为pkl文件
-joblib.dump(model, "model.pkl")
+joblib.dump(model, "svm_model.pkl.pkl")
 joblib.dump(scaler, "scaler.pkl")
